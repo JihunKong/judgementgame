@@ -940,6 +940,6 @@ st.markdown("""
 <div style='text-align: center; color: white; padding: 2rem;'>
     <h3>💡 금천중학교 AI 모의재판 시스템</h3>
     <p>본 시스템은 학생들의 논리적 사고력과 토론 능력 향상을 위해 개발되었습니다.</p>
-    <p>문의: 국어과 교무실 | Made with ❤️ for Geumcheon Middle School Students</p>
+    <p>문의: 금천중학교 교사 신세령 | Made with ❤️ for Geumcheon Middle School Students</p>
 </div>
 """, unsafe_allow_html=True)
