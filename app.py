@@ -126,8 +126,6 @@ def get_ai_judgment(prompt):
                 {"role": "system", "content": "당신은 교육적이고 공정한 AI 판사입니다. 학생들의 모의재판을 평가하고 교육적 피드백을 제공합니다."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
-            max_tokens=2000
         )
         return response.choices[0].message.content
     except Exception as e:
