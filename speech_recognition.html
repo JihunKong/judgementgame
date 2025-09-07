@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>음성 인식</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        #result {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-height: 100px;
+            white-space: pre-wrap;
+        }
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        button.recording {
+            background: #4ecdc4;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(78, 205, 196, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0); }
+        }
+        .status {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎙️ 실시간 음성 인식</h1>
+    <button id="startBtn" onclick="toggleRecognition()">🔴 녹음 시작</button>
+    <div class="status" id="status">준비됨</div>
+    <div id="result"></div>
+    
+    <script>
+        // 브라우저 음성 인식 API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            alert('이 브라우저는 음성 인식을 지원하지 않습니다. Chrome이나 Edge를 사용해주세요.');
+        }
+        
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ko-KR';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        
+        let isRecording = false;
+        let finalTranscript = '';
+        
+        function toggleRecognition() {
+            if (isRecording) {
+                stopRecognition();
+            } else {
+                startRecognition();
+            }
+        }
+        
+        function startRecognition() {
+            finalTranscript = '';
+            recognition.start();
+            isRecording = true;
+            document.getElementById('startBtn').textContent = '⏹️ 녹음 중지';
+            document.getElementById('startBtn').classList.add('recording');
+            document.getElementById('status').textContent = '🎤 녹음 중...';
+        }
+        
+        function stopRecognition() {
+            recognition.stop();
+            isRecording = false;
+            document.getElementById('startBtn').textContent = '🔴 녹음 시작';
+            document.getElementById('startBtn').classList.remove('recording');
+            document.getElementById('status').textContent = '준비됨';
+            
+            // 결과를 부모 창(Streamlit)으로 전송
+            if (window.parent !== window) {
+                window.parent.postMessage({
+                    type: 'speech_result',
+                    text: finalTranscript
+                }, '*');
+            }
+        }
+        
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+            
+            document.getElementById('result').innerHTML = 
+                '<strong>인식된 텍스트:</strong><br>' + 
+                finalTranscript + 
+                '<span style="color: #999;">' + interimTranscript + '</span>';
+        };
+        
+        recognition.onerror = (event) => {
+            console.error('음성 인식 오류:', event.error);
+            document.getElementById('status').textContent = '오류: ' + event.error;
+            if (event.error === 'no-speech') {
+                document.getElementById('status').textContent = '음성이 감지되지 않았습니다.';
+            }
+        };
+        
+        recognition.onend = () => {
+            if (isRecording) {
+                // 자동 재시작 (연속 녹음)
+                recognition.start();
+            }
+        };
+    </script>
+</body>
+</html>
