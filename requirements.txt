@@ -1,4 +1,4 @@
 streamlit
 openai
-streamlit-audiorecorder
+audio-recorder-streamlit
 python-dotenv

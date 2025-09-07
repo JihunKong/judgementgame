@@ -7,7 +7,7 @@ import streamlit as st
 import os
 from openai import OpenAI
 import tempfile
-from streamlit_audiorecorder import audiorecorder
+from audio_recorder_streamlit import audio_recorder
 from datetime import datetime
 import json
 import time
@@ -632,8 +632,14 @@ if st.session_state.mode == 'simple':
             st.markdown("**🎙️ 음성 녹음**")
             col_rec1, col_rec2 = st.columns([3, 1])
             with col_rec1:
-                # audiorecorder 사용 - 더 안정적인 녹음
-                audio = audiorecorder("🔴 녹음 시작", "⏹️ 녹음 중지", key=f"pros_audio_{round_num}")
+                # audio_recorder 사용 - 더 안정적인 녹음
+                audio = audio_recorder(
+                    text="🔴 녹음 시작 (클릭)",
+                    recording_color="#ff0000",
+                    neutral_color="#ff9a8b",
+                    icon_size="3x",
+                    key=f"pros_audio_{round_num}"
+                )
             with col_rec2:
                 if audio and len(audio) > 1000:
                     st.success("✅ 녹음 완료")
@@ -704,8 +710,14 @@ if st.session_state.mode == 'simple':
             st.markdown("**🎙️ 음성 녹음**")
             col_rec1, col_rec2 = st.columns([3, 1])
             with col_rec1:
-                # audiorecorder 사용 - 더 안정적인 녹음
-                audio = audiorecorder("🔴 녹음 시작", "⏹️ 녹음 중지", key=f"def_audio_{round_num}")
+                # audio_recorder 사용 - 더 안정적인 녹음
+                audio = audio_recorder(
+                    text="🔴 녹음 시작 (클릭)",
+                    recording_color="#ff0000",
+                    neutral_color="#a8e6cf",
+                    icon_size="3x",
+                    key=f"def_audio_{round_num}"
+                )
             with col_rec2:
                 if audio and len(audio) > 1000:
                     st.success("✅ 녹음 완료")
