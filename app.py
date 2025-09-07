@@ -29,7 +29,7 @@ st.markdown("""
 <style>
     /* 메인 배경 */
     .stApp {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
     
     /* 포인트 표시 */
@@ -62,12 +62,12 @@ st.markdown("""
     
     .stTabs [aria-selected="true"] {
         background-color: white;
-        color: #667eea;
+        color: #5a9fd4;
     }
     
     /* 버튼 스타일 */
     .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #5a9fd4 0%, #7bb8db 100%);
         color: white;
         border: none;
         padding: 0.75rem 2rem;
@@ -75,7 +75,7 @@ st.markdown("""
         font-weight: bold;
         font-size: 1rem;
         transition: all 0.3s;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
     }
     
     .stButton > button:hover {
@@ -94,21 +94,21 @@ st.markdown("""
     
     /* 팀 카드 */
     .team-card-prosecutor {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+        background: linear-gradient(135deg, #ff9a8b 0%, #ffb4a2 100%);
         border-radius: 15px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 8px 25px rgba(255,107,107,0.3);
+        box-shadow: 0 8px 25px rgba(255,154,139,0.25);
         color: white;
     }
     
     .team-card-defender {
-        background: linear-gradient(135deg, #4ecdc4 0%, #44a3aa 100%);
+        background: linear-gradient(135deg, #a8e6cf 0%, #b4e7ce 100%);
         border-radius: 15px;
         padding: 1.5rem;
         margin: 1rem 0;
-        box-shadow: 0 8px 25px rgba(78,205,196,0.3);
-        color: white;
+        box-shadow: 0 8px 25px rgba(168,230,207,0.25);
+        color: #2d5f3f;
     }
     
     /* 타이머 */
@@ -145,7 +145,7 @@ st.markdown("""
     
     .progress-fill {
         height: 100%;
-        background: linear-gradient(90deg, #667eea, #764ba2);
+        background: linear-gradient(90deg, #5a9fd4, #7bb8db);
         transition: width 0.3s ease;
     }
     
@@ -294,21 +294,22 @@ def create_versus_display():
     
     st.markdown(f"""
     <div class='versus-display'>
-        <div style='background: linear-gradient(90deg, #ff6b6b, #ff8787); 
+        <div style='background: linear-gradient(90deg, #ff9a8b, #ffb4a2); 
                     width: {pros_percent}%; 
                     display: flex; 
                     align-items: center; 
                     justify-content: center;
                     color: white;
-                    font-weight: bold;'>
+                    font-weight: bold;
+                    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);'>
             검사 {pros_points}점
         </div>
-        <div style='background: linear-gradient(90deg, #4ecdc4, #44a3aa); 
+        <div style='background: linear-gradient(90deg, #a8e6cf, #b4e7ce); 
                     width: {def_percent}%; 
                     display: flex; 
                     align-items: center; 
                     justify-content: center;
-                    color: white;
+                    color: #2d5f3f;
                     font-weight: bold;'>
             변호 {def_points}점
         </div>
@@ -393,6 +394,11 @@ if 'initialized' not in st.session_state:
 def transcribe_audio(audio_bytes, language="ko"):
     """음성 인식"""
     try:
+        # 오디오 파일 크기 확인 (최소 0.1초 이상)
+        if len(audio_bytes) < 1000:  # 대략 1KB 미만
+            st.warning("⚠️ 녹음이 너무 짧습니다. 최소 1초 이상 녹음해주세요.")
+            return ""
+        
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
             tmp_file.write(audio_bytes)
             tmp_file_path = tmp_file.name
@@ -407,7 +413,13 @@ def transcribe_audio(audio_bytes, language="ko"):
         os.unlink(tmp_file_path)
         return transcript.text
     except Exception as e:
-        st.error(f"음성 인식 오류: {str(e)}")
+        error_msg = str(e)
+        if "audio_too_short" in error_msg:
+            st.warning("⚠️ 녹음이 너무 짧습니다. 최소 1초 이상 녹음해주세요.")
+        elif "invalid_request_error" in error_msg:
+            st.error("❌ 오디오 파일 형식이 올바르지 않습니다.")
+        else:
+            st.error(f"음성 인식 오류: {error_msg}")
         return ""
 
 def get_ai_judgment(prompt):
@@ -546,8 +558,8 @@ if st.session_state.mode == 'simple':
             # 음성 입력
             audio = audio_recorder(
                 text="🎙️ 녹음",
-                recording_color="#ff6b6b",
-                neutral_color="#667eea",
+                recording_color="#ff9a8b",
+                neutral_color="#5a9fd4",
                 icon_size="2x",
                 key=f"pros_audio_{round_num}"
             )
@@ -592,8 +604,8 @@ if st.session_state.mode == 'simple':
             # 음성 입력
             audio = audio_recorder(
                 text="🎙️ 녹음",
-                recording_color="#4ecdc4",
-                neutral_color="#667eea",
+                recording_color="#a8e6cf",
+                neutral_color="#5a9fd4",
                 icon_size="2x",
                 key=f"def_audio_{round_num}"
             )
@@ -661,10 +673,11 @@ if st.session_state.mode == 'simple':
         # 판결 표시
         if st.session_state.ai_judgment:
             st.markdown("""
-            <div style='background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            <div style='background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
                         padding: 2rem;
                         border-radius: 20px;
-                        box-shadow: 0 10px 40px rgba(0,0,0,0.2);'>
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+                        border: 2px solid #e0e0e0;'>
             """, unsafe_allow_html=True)
             
             st.markdown(st.session_state.ai_judgment)
