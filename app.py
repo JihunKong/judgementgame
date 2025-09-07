@@ -417,6 +417,8 @@ if 'initialized' not in st.session_state:
     st.session_state.current_round = 1
     st.session_state.timer_start = None
     st.session_state.mode = 'simple'  # simple or advanced
+    st.session_state.last_audio_pros = None  # 마지막 오디오 추적
+    st.session_state.last_audio_def = None
     init_gamification()
 
 # ===== 핵심 함수 =====
@@ -425,7 +427,7 @@ def transcribe_audio(audio_bytes, language="ko"):
     """음성 인식"""
     try:
         # 오디오 파일 크기 확인 (최소 0.1초 이상)
-        if len(audio_bytes) < 1000:  # 대략 1KB 미만
+        if not audio_bytes or len(audio_bytes) < 1000:  # 대략 1KB 미만
             st.warning("⚠️ 녹음이 너무 짧습니다. 최소 1초 이상 녹음해주세요.")
             return ""
         
@@ -625,20 +627,24 @@ if st.session_state.mode == 'simple':
                     key=f"pros_audio_{round_num}"
                 )
             with col_rec2:
-                if audio:
+                if audio and len(audio) > 1000:
                     st.success("✅ 녹음 완료")
                 else:
                     st.info("⏸️ 대기중")
             
-            if audio:
-                with st.spinner("음성 인식 중..."):
-                    text = transcribe_audio(audio)
-                    if text:
-                        st.session_state.rounds[round_num-1]['prosecutor'] = text
-                        create_quick_feedback(text, 'prosecutor')
-                        st.session_state.speech_count['prosecutor'] += 1
-                        st.session_state.combo['prosecutor'] += 1
-                        check_badges('prosecutor')
+            # 새로운 오디오인지 확인
+            if audio and len(audio) > 1000:  # 최소 1KB 이상의 오디오만 처리
+                # 이전 오디오와 다른 경우만 처리
+                if st.session_state.last_audio_pros != audio:
+                    st.session_state.last_audio_pros = audio
+                    with st.spinner("음성 인식 중..."):
+                        text = transcribe_audio(audio)
+                        if text and len(text.strip()) > 0:  # 실제 텍스트가 있을 때만
+                            st.session_state.rounds[round_num-1]['prosecutor'] = text
+                            create_quick_feedback(text, 'prosecutor')
+                            st.session_state.speech_count['prosecutor'] += 1
+                            st.session_state.combo['prosecutor'] += 1
+                            check_badges('prosecutor')
             
             # 텍스트 입력 섹션
             st.markdown("**✍️ 텍스트 입력**")
@@ -653,9 +659,12 @@ if st.session_state.mode == 'simple':
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
                 if st.button("💾 저장하기", key=f"save_pros_{round_num}", use_container_width=True, type="primary"):
-                    st.session_state.rounds[round_num-1]['prosecutor'] = prosecutor_text
-                    if prosecutor_text:
+                    if prosecutor_text and len(prosecutor_text.strip()) > 10:  # 최소 10자 이상
+                        st.session_state.rounds[round_num-1]['prosecutor'] = prosecutor_text
                         create_quick_feedback(prosecutor_text, 'prosecutor')
+                        st.session_state.speech_count['prosecutor'] += 1
+                    else:
+                        st.warning("⚠️ 발언 내용을 10자 이상 입력해주세요.")
             with col_btn2:
                 if st.button("🗑️ 초기화", key=f"clear_pros_{round_num}", use_container_width=True):
                     st.session_state.rounds[round_num-1]['prosecutor'] = ""
@@ -695,20 +704,24 @@ if st.session_state.mode == 'simple':
                     key=f"def_audio_{round_num}"
                 )
             with col_rec2:
-                if audio:
+                if audio and len(audio) > 1000:
                     st.success("✅ 녹음 완료")
                 else:
                     st.info("⏸️ 대기중")
             
-            if audio:
-                with st.spinner("음성 인식 중..."):
-                    text = transcribe_audio(audio)
-                    if text:
-                        st.session_state.rounds[round_num-1]['defender'] = text
-                        create_quick_feedback(text, 'defender')
-                        st.session_state.speech_count['defender'] += 1
-                        st.session_state.combo['defender'] += 1
-                        check_badges('defender')
+            # 새로운 오디오인지 확인
+            if audio and len(audio) > 1000:  # 최소 1KB 이상의 오디오만 처리
+                # 이전 오디오와 다른 경우만 처리
+                if st.session_state.last_audio_def != audio:
+                    st.session_state.last_audio_def = audio
+                    with st.spinner("음성 인식 중..."):
+                        text = transcribe_audio(audio)
+                        if text and len(text.strip()) > 0:  # 실제 텍스트가 있을 때만
+                            st.session_state.rounds[round_num-1]['defender'] = text
+                            create_quick_feedback(text, 'defender')
+                            st.session_state.speech_count['defender'] += 1
+                            st.session_state.combo['defender'] += 1
+                            check_badges('defender')
             
             # 텍스트 입력 섹션
             st.markdown("**✍️ 텍스트 입력**")
@@ -723,9 +736,12 @@ if st.session_state.mode == 'simple':
             col_btn1, col_btn2 = st.columns(2)
             with col_btn1:
                 if st.button("💾 저장하기", key=f"save_def_{round_num}", use_container_width=True, type="primary"):
-                    st.session_state.rounds[round_num-1]['defender'] = defender_text
-                    if defender_text:
+                    if defender_text and len(defender_text.strip()) > 10:  # 최소 10자 이상
+                        st.session_state.rounds[round_num-1]['defender'] = defender_text
                         create_quick_feedback(defender_text, 'defender')
+                        st.session_state.speech_count['defender'] += 1
+                    else:
+                        st.warning("⚠️ 발언 내용을 10자 이상 입력해주세요.")
             with col_btn2:
                 if st.button("🗑️ 초기화", key=f"clear_def_{round_num}", use_container_width=True):
                     st.session_state.rounds[round_num-1]['defender'] = ""
