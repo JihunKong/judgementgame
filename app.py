@@ -7,7 +7,7 @@ import streamlit as st
 import os
 from openai import OpenAI
 import tempfile
-from st_audiorec import st_audiorec
+from streamlit_audiorecorder import audiorecorder
 from datetime import datetime
 import json
 import time
@@ -424,16 +424,25 @@ if 'initialized' not in st.session_state:
 # ===== 핵심 함수 =====
 
 def transcribe_audio(audio_bytes, language="ko"):
-    """음성 인식 - 최적화 버전"""
+    """음성 인식 - 리소스 최적화 버전"""
     try:
         # 오디오 파일 크기 확인 (최소 0.1초 이상)
         if not audio_bytes or len(audio_bytes) < 1000:  # 대략 1KB 미만
-            st.warning("⚠️ 녹음이 너무 짧습니다. 최소 1초 이상 녹음해주세요.")
             return ""
+        
+        # 오디오 크기 제한 (최대 30초 - 약 500KB)
+        MAX_SIZE = 500000  # 500KB
+        if len(audio_bytes) > MAX_SIZE:
+            st.warning("⚠️ 녹음이 너무 깁니다. 30초 이내로 녹음해주세요.")
+            audio_bytes = audio_bytes[:MAX_SIZE]
         
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
             tmp_file.write(audio_bytes)
             tmp_file_path = tmp_file.name
+        
+        # 진행 표시
+        progress_text = st.empty()
+        progress_text.info("🎙️ 음성 인식 중... (5-10초 소요)")
         
         with open(tmp_file_path, "rb") as audio_file:
             # response_format="text" 추가로 JSON 파싱 오버헤드 제거
@@ -441,9 +450,11 @@ def transcribe_audio(audio_bytes, language="ko"):
                 model="whisper-1",
                 file=audio_file,
                 language=language,
-                response_format="text"  # 속도 향상을 위해 텍스트로 직접 받기
+                response_format="text",  # 속도 향상을 위해 텍스트로 직접 받기
+                prompt="중학생 모의재판 발언"  # 컨텍스트 제공으로 정확도 향상
             )
         
+        progress_text.empty()
         os.unlink(tmp_file_path)
         return transcript  # response_format="text"일 때는 직접 텍스트 반환
     except Exception as e:
@@ -621,8 +632,8 @@ if st.session_state.mode == 'simple':
             st.markdown("**🎙️ 음성 녹음**")
             col_rec1, col_rec2 = st.columns([3, 1])
             with col_rec1:
-                # st_audiorec 사용 - 더 안정적인 녹음
-                audio = st_audiorec(key=f"pros_audio_{round_num}")
+                # audiorecorder 사용 - 더 안정적인 녹음
+                audio = audiorecorder("🔴 녹음 시작", "⏹️ 녹음 중지", key=f"pros_audio_{round_num}")
             with col_rec2:
                 if audio and len(audio) > 1000:
                     st.success("✅ 녹음 완료")
@@ -693,8 +704,8 @@ if st.session_state.mode == 'simple':
             st.markdown("**🎙️ 음성 녹음**")
             col_rec1, col_rec2 = st.columns([3, 1])
             with col_rec1:
-                # st_audiorec 사용 - 더 안정적인 녹음
-                audio = st_audiorec(key=f"def_audio_{round_num}")
+                # audiorecorder 사용 - 더 안정적인 녹음
+                audio = audiorecorder("🔴 녹음 시작", "⏹️ 녹음 중지", key=f"def_audio_{round_num}")
             with col_rec2:
                 if audio and len(audio) > 1000:
                     st.success("✅ 녹음 완료")
