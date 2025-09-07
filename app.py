@@ -32,6 +32,22 @@ st.markdown("""
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
     
+    /* 녹음 상태 표시 */
+    @keyframes recording-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); }
+        70% { box-shadow: 0 0 0 20px rgba(255, 0, 0, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0); }
+    }
+    
+    .recording-indicator {
+        animation: recording-pulse 1.5s infinite;
+        background: #ff4444;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+    }
+    
     /* 포인트 표시 */
     .point-display {
         background: rgba(255, 255, 255, 0.95);
@@ -100,6 +116,7 @@ st.markdown("""
         margin: 1rem 0;
         box-shadow: 0 8px 25px rgba(255,154,139,0.25);
         color: white;
+        border: 3px solid #ff7a6b;
     }
     
     .team-card-defender {
@@ -109,6 +126,7 @@ st.markdown("""
         margin: 1rem 0;
         box-shadow: 0 8px 25px rgba(168,230,207,0.25);
         color: #2d5f3f;
+        border: 3px solid #7dd3b0;
     }
     
     /* 타이머 */
@@ -156,6 +174,18 @@ st.markdown("""
         padding: 2rem;
         margin: 1rem 0;
         box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    /* 섹션 구분 */
+    .section-header {
+        background: linear-gradient(90deg, #5a9fd4 0%, #7bb8db 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 10px;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
     
     /* VS 표시 */
@@ -473,11 +503,24 @@ create_versus_display()
 # 간편 모드
 if st.session_state.mode == 'simple':
     
-    # 탭 구조
-    tab1, tab2, tab3, tab4 = st.tabs(["📋 준비", "🎤 토론", "🤖 판결", "📊 결과"])
+    # 탭 구조 - 더 명확한 라벨
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📋 1단계: 사건 준비", 
+        "🎤 2단계: 토론 진행", 
+        "🤖 3단계: AI 판결", 
+        "📊 4단계: 결과 확인"
+    ])
     
     with tab1:
         st.markdown("## 📋 사건 준비 (5분)")
+        
+        # 시작 안내
+        st.info("""
+        👉 **진행 순서**
+        1. 아래에서 사건을 선택하고 '사건 불러오기' 버튼을 누르세요
+        2. 팀 구성원을 확인하세요 (검사팀 3명, 변호팀 3명)
+        3. 준비가 되면 '토론' 탭으로 이동하세요
+        """)
         
         col1, col2 = st.columns([2, 1])
         
@@ -532,6 +575,15 @@ if st.session_state.mode == 'simple':
     with tab2:
         st.markdown("## 🎤 토론 진행 (25분)")
         
+        # 토론 안내
+        st.warning("""
+        🎙️ **녹음 방법**
+        1. '🔴 녹음 시작' 버튼을 클릭하세요
+        2. 말하기를 시작하세요 (최소 1초 이상)
+        3. 다시 클릭하면 녹음이 종료됩니다
+        4. 또는 아래 텍스트 입력창에 직접 입력해도 됩니다
+        """)
+        
         # 라운드 선택
         round_num = st.selectbox(
             "라운드 선택",
@@ -543,26 +595,40 @@ if st.session_state.mode == 'simple':
         
         # 검사팀
         with col1:
+            st.markdown('<div class="team-card-prosecutor">', unsafe_allow_html=True)
             st.markdown("### ⚔️ 검사팀")
             
             # 팀 대시보드
+            st.markdown('<div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">', unsafe_allow_html=True)
             col_a, col_b, col_c = st.columns(3)
             with col_a:
-                st.metric("점수", f"{st.session_state.points.get('prosecutor', 0)}점")
+                st.metric("🏆 점수", f"{st.session_state.points.get('prosecutor', 0)}점")
             with col_b:
-                st.metric("발언", f"{st.session_state.speech_count.get('prosecutor', 0)}회")
+                st.metric("🗣️ 발언", f"{st.session_state.speech_count.get('prosecutor', 0)}회")
             with col_c:
                 combo = st.session_state.combo.get('prosecutor', 0)
-                st.metric("콤보", f"x{combo}")
+                if combo >= 3:
+                    st.metric("🔥 콤보", f"x{combo}")
+                else:
+                    st.metric("🔗 콤보", f"x{combo}")
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # 음성 입력
-            audio = audio_recorder(
-                text="🎙️ 녹음",
-                recording_color="#ff9a8b",
-                neutral_color="#5a9fd4",
-                icon_size="2x",
-                key=f"pros_audio_{round_num}"
-            )
+            # 음성 입력 섹션
+            st.markdown("**🎙️ 음성 녹음**")
+            col_rec1, col_rec2 = st.columns([3, 1])
+            with col_rec1:
+                audio = audio_recorder(
+                    text="🔴 녹음 시작 (클릭)",
+                    recording_color="#ff0000",
+                    neutral_color="#ff9a8b",
+                    icon_size="3x",
+                    key=f"pros_audio_{round_num}"
+                )
+            with col_rec2:
+                if audio:
+                    st.success("✅ 녹음 완료")
+                else:
+                    st.info("⏸️ 대기중")
             
             if audio:
                 with st.spinner("음성 인식 중..."):
@@ -574,41 +640,65 @@ if st.session_state.mode == 'simple':
                         st.session_state.combo['prosecutor'] += 1
                         check_badges('prosecutor')
             
-            # 텍스트 입력
+            # 텍스트 입력 섹션
+            st.markdown("**✍️ 텍스트 입력**")
             prosecutor_text = st.text_area(
-                "검사 발언",
+                "검사팀 주장을 입력하세요",
                 value=st.session_state.rounds[round_num-1]['prosecutor'],
                 height=200,
-                key=f"pros_text_{round_num}"
+                key=f"pros_text_{round_num}",
+                placeholder="예: 피고는 학교 규칙을 위반했습니다. 첫째, ... 둘째, ... 따라서..."
             )
             
-            if st.button("💾 저장", key=f"save_pros_{round_num}"):
-                st.session_state.rounds[round_num-1]['prosecutor'] = prosecutor_text
-                if prosecutor_text:
-                    create_quick_feedback(prosecutor_text, 'prosecutor')
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                if st.button("💾 저장하기", key=f"save_pros_{round_num}", use_container_width=True, type="primary"):
+                    st.session_state.rounds[round_num-1]['prosecutor'] = prosecutor_text
+                    if prosecutor_text:
+                        create_quick_feedback(prosecutor_text, 'prosecutor')
+            with col_btn2:
+                if st.button("🗑️ 초기화", key=f"clear_pros_{round_num}", use_container_width=True):
+                    st.session_state.rounds[round_num-1]['prosecutor'] = ""
+                    st.rerun()
+            
+            st.markdown('</div>', unsafe_allow_html=True)
         
         # 변호팀
         with col2:
+            st.markdown('<div class="team-card-defender">', unsafe_allow_html=True)
             st.markdown("### 🛡️ 변호팀")
             
             # 팀 대시보드
+            st.markdown('<div style="background: white; padding: 1rem; border-radius: 10px; margin-bottom: 1rem;">', unsafe_allow_html=True)
             col_a, col_b, col_c = st.columns(3)
             with col_a:
-                st.metric("점수", f"{st.session_state.points.get('defender', 0)}점")
+                st.metric("🏆 점수", f"{st.session_state.points.get('defender', 0)}점")
             with col_b:
-                st.metric("발언", f"{st.session_state.speech_count.get('defender', 0)}회")
+                st.metric("🗣️ 발언", f"{st.session_state.speech_count.get('defender', 0)}회")
             with col_c:
                 combo = st.session_state.combo.get('defender', 0)
-                st.metric("콤보", f"x{combo}")
+                if combo >= 3:
+                    st.metric("🔥 콤보", f"x{combo}")
+                else:
+                    st.metric("🔗 콤보", f"x{combo}")
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            # 음성 입력
-            audio = audio_recorder(
-                text="🎙️ 녹음",
-                recording_color="#a8e6cf",
-                neutral_color="#5a9fd4",
-                icon_size="2x",
-                key=f"def_audio_{round_num}"
-            )
+            # 음성 입력 섹션
+            st.markdown("**🎙️ 음성 녹음**")
+            col_rec1, col_rec2 = st.columns([3, 1])
+            with col_rec1:
+                audio = audio_recorder(
+                    text="🔴 녹음 시작 (클릭)",
+                    recording_color="#ff0000",
+                    neutral_color="#a8e6cf",
+                    icon_size="3x",
+                    key=f"def_audio_{round_num}"
+                )
+            with col_rec2:
+                if audio:
+                    st.success("✅ 녹음 완료")
+                else:
+                    st.info("⏸️ 대기중")
             
             if audio:
                 with st.spinner("음성 인식 중..."):
@@ -620,21 +710,39 @@ if st.session_state.mode == 'simple':
                         st.session_state.combo['defender'] += 1
                         check_badges('defender')
             
-            # 텍스트 입력
+            # 텍스트 입력 섹션
+            st.markdown("**✍️ 텍스트 입력**")
             defender_text = st.text_area(
-                "변호 발언",
+                "변호팀 반박을 입력하세요",
                 value=st.session_state.rounds[round_num-1]['defender'],
                 height=200,
-                key=f"def_text_{round_num}"
+                key=f"def_text_{round_num}",
+                placeholder="예: 검사 측 주장과 달리, 피고는... 실제로는... 따라서..."
             )
             
-            if st.button("💾 저장", key=f"save_def_{round_num}"):
-                st.session_state.rounds[round_num-1]['defender'] = defender_text
-                if defender_text:
-                    create_quick_feedback(defender_text, 'defender')
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                if st.button("💾 저장하기", key=f"save_def_{round_num}", use_container_width=True, type="primary"):
+                    st.session_state.rounds[round_num-1]['defender'] = defender_text
+                    if defender_text:
+                        create_quick_feedback(defender_text, 'defender')
+            with col_btn2:
+                if st.button("🗑️ 초기화", key=f"clear_def_{round_num}", use_container_width=True):
+                    st.session_state.rounds[round_num-1]['defender'] = ""
+                    st.rerun()
+            
+            st.markdown('</div>', unsafe_allow_html=True)
     
     with tab3:
         st.markdown("## 🤖 AI 판결 (5분)")
+        
+        # 판결 안내
+        st.info("""
+        ⚖️ **AI 판사 판결 받기**
+        1. 모든 라운드의 토론이 완료되었나요?
+        2. 아래 '판결 요청' 버튼을 누르면 AI 판사가 분석을 시작합니다
+        3. 10-15초 정도 기다리면 판결문이 나타납니다
+        """)
         
         if st.button("🤖 AI 판사에게 판결 요청", type="primary", use_container_width=True):
             with st.spinner("AI 판사가 신중하게 검토 중입니다..."):
