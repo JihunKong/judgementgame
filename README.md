@@ -16,6 +16,35 @@
 - 💾 세션 저장 및 불러오기
 - 📚 다양한 샘플 사건 제공
 
+## 🚀 버전 선택 가이드
+
+### ⭐ **app_simple.py** - 경량 버전 (추천!)
+```bash
+streamlit run app_simple.py
+```
+- ✅ **즉각적인 응답** (지연 없음)
+- ✅ **텍스트 입력 중심** (100% 정확도)
+- ✅ **GPT-3.5 사용** (빠른 판결, 저렴한 비용)
+- ✅ **50분 수업에 최적화**
+- ✅ **안정적 작동 보장**
+
+### 🎮 **app.py** - 풀 버전
+```bash
+streamlit run app.py
+```
+- 게이미피케이션 시스템 (포인트, 레벨, 뱃지)
+- 음성 인식 지원 (5-10초 처리 시간)
+- 상세한 분석 및 피드백
+- 고급 기능 포함
+
+### ⚡ **browser_speech.py** - 브라우저 음성 인식
+```bash
+streamlit run browser_speech.py
+```
+- 실시간 음성 인식 (Web Speech API)
+- 서버 부담 없음 (무료)
+- Chrome/Edge에서 최적 작동
+
 ## 🚀 빠른 시작
 
 ### 1. Streamlit Cloud 배포 (권장)
@@ -37,8 +66,10 @@ pip install -r requirements.txt
 # 환경변수 설정
 echo "OPENAI_API_KEY=sk-your-key" > .env
 
-# 실행
-streamlit run app_improved.py
+# 실행 (버전 선택)
+streamlit run app_simple.py  # 추천!
+# 또는
+streamlit run app.py  # 풀 버전
 ```
 
 ## 📖 사용법
@@ -91,8 +122,10 @@ streamlit run app_improved.py
 
 ```
 judgementgame/
-├── app.py                 # 기본 앱
-├── app_improved.py        # 개선된 앱 (권장)
+├── app.py                 # 풀 버전 (게이미피케이션)
+├── app_simple.py         # 경량 버전 (추천!)
+├── browser_speech.py     # 브라우저 음성 인식
+├── speech_recognition.html # 독립형 음성 인식
 ├── utils.py              # 유틸리티 함수
 ├── requirements.txt      # 의존성
 ├── .streamlit/
@@ -106,8 +139,8 @@ judgementgame/
 ## 🔧 기술 스택
 
 - **Frontend**: Streamlit
-- **AI**: OpenAI GPT-4, Whisper
-- **Audio**: audio-recorder-streamlit
+- **AI**: OpenAI GPT-3.5/4, Whisper
+- **Audio**: streamlit-audiorecorder, Web Speech API
 - **Deployment**: Streamlit Cloud
 
 ## 📱 지원 환경
